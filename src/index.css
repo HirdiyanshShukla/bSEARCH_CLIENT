@@ -35,6 +35,17 @@ body {
   padding: 2rem;
 }
 
+.owner-card {
+  background: #18181b;
+  padding: 2rem;
+  border-radius: 1rem;
+  transition: 0.2s;
+}
+.owner-card:hover {
+  background: #27272a;
+}
+
+
 .auth-background {
   position: absolute;
   inset: 0;

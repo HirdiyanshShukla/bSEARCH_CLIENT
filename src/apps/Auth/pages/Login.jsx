@@ -8,10 +8,12 @@ import { useAuth } from '../context/AuthContext';
 export default function Login() {
     const navigate = useNavigate();
     const { login } = useAuth();
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
+
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -44,24 +46,27 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         setLoading(true);
         setMessage({ type: '', text: '' });
 
         try {
-            await login(formData.email, formData.password);
+            const me = await login(formData.email, formData.password);
+
             setMessage({
                 type: 'success',
                 text: 'Login successful! Redirecting...'
             });
 
-            // Navigate to home/dashboard
             setTimeout(() => {
-                navigate('/');
-            }, 1000);
+                if (me?.role === "owner") {
+                    navigate("/owner");
+                } else {
+                    navigate("/");
+                }
+            }, 500);
+
         } catch (error) {
             setMessage({
                 type: 'error',
@@ -73,10 +78,7 @@ export default function Login() {
     };
 
     return (
-        <AuthLayout
-            title="Welcome Back"
-            subtitle="Log in to your account"
-        >
+        <AuthLayout title="Welcome Back" subtitle="Log in to your account">
             <form onSubmit={handleSubmit} className="auth-form">
                 <Input
                     label="Email Address"

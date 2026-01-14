@@ -23,38 +23,33 @@ const resetSession = () => {
 
 
 const checkAuthStatus = async () => {
-    if (isAuthenticated) return;
+    if (isAuthenticated) return user;
+
     try {
         const response = await authService.checkAuth();
-
-        const userData = response.user;   // 👈 THIS is the fix
-
-        if (!userData) throw new Error("User data missing");
+        const userData = response.user;
 
         setUser(userData);
         setIsAuthenticated(true);
+        setLoading(false);
 
-        console.log('[Auth] User authenticated:', userData);
-    } catch (error) {
-        console.log('[Auth] Not authenticated:', error.message);
+        return userData;
+    } catch {
         setUser(null);
         setIsAuthenticated(false);
-    } finally {
         setLoading(false);
+        return null;
     }
 };
 
 
-    const login = async (email, password) => {
-        const response = await authService.login(email, password);
-        // Handle both response.data and response.user formats from backend
-        // const userData = response.user || response.data || response;
-        await checkAuthStatus();
-        // setUser(userData);
-        // setIsAuthenticated(true);
-        // console.log('[Auth] Login successful:', userData);
-        return response;
-    };
+
+const login = async (email, password) => {
+    const response = await authService.login(email, password);
+    const me = await checkAuthStatus();
+    return me;
+};
+
 
     const logout = async () => {
         try {
