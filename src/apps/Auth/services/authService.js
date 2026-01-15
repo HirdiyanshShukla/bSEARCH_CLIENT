@@ -2,12 +2,13 @@ import apiClient from '../../../config/api';
 
 const authService = {
   // Sign up a new user
-  signup: async (email, password, name) => {
+  signup: async (email, password, name, role="user") => {
     try {
       const response = await apiClient.post('/user/signup', {
         email,
         password,
         name,
+        role,
       });
       return response.data;
     } catch (error) {

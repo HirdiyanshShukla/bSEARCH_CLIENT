@@ -4,10 +4,12 @@ import SearchForm from '../components/SearchForm';
 import BusinessCard from '../components/BusinessCard';
 import ClaimModal from '../components/ClaimModal';
 import businessService from '../services/businessService';
+import { useNavigate } from 'react-router-dom';
 
 export default function HomePage() {
   const { logout } = useAuth();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -81,6 +83,16 @@ export default function HomePage() {
             </svg>
             Business Search
           </h1>
+
+{user?.role === "owner" && (
+  <button
+    onClick={() => navigate("/owner")}
+    className="btn btn-outline"
+  >
+    Owner Dashboard
+  </button>
+)}
+
 
           <button onClick={logout} className="btn btn-outline">
             <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">

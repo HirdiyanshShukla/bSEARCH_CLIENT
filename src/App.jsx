@@ -13,6 +13,8 @@ import OwnerHome from './apps/Owner/pages/OwnerHome';
 import AnnouncementForm from './apps/Owner/components/AnnouncementForm';
 import ItemManager from './apps/Owner/components/ItemManager';
 import PollManager from './apps/Owner/components/PollManager';
+import OfferManager from './apps/Owner/components/OfferManager';
+
 
 export default function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -61,6 +63,11 @@ export default function App() {
         path="/owner/poll/:placeId"
         element={isAuthenticated ? <PollManager /> : <Navigate to="/login" replace />}
       />
+      <Route
+        path="/owner/offer/:placeId"
+        element={isAuthenticated ? <OfferManager /> : <Navigate to="/login" replace />}
+      />
+
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

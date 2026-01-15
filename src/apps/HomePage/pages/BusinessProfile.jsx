@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Auth/context/AuthContext';
 import ClaimModal from '../components/ClaimModal';
 import businessService from '../services/businessService';
+import ownerService from '../../Owner/services/ownerService';
+
 
 export default function BusinessProfile() {
     const { placeId } = useParams();
@@ -10,7 +12,9 @@ export default function BusinessProfile() {
     const { user } = useAuth();
 
     const [business, setBusiness] = useState(null);
+    const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingItems, setLoadingItems] = useState(false);
     const [error, setError] = useState('');
     const [showClaimModal, setShowClaimModal] = useState(false);
 
@@ -25,6 +29,11 @@ export default function BusinessProfile() {
         try {
             const response = await businessService.getBusinessProfile(placeId);
             setBusiness(response.data);
+
+            // Load items if business is claimed
+            if (response.data?.claimed) {
+                loadItems();
+            }
         } catch (err) {
             setError(err.message || 'Failed to load business profile');
         } finally {
@@ -32,25 +41,38 @@ export default function BusinessProfile() {
         }
     };
 
-// const handleDirections = (e) => {
-//     if (!business) return;
-    
+    const loadItems = async () => {
+        try {
+            setLoadingItems(true);
+            const response = await ownerService.getItems(placeId);
+            setItems(response.data.data || []);
+        } catch (err) {
+            console.error('Failed to load items:', err);
+            setItems([]);
+        } finally {
+            setLoadingItems(false);
+        }
+    };
 
-//     let destination = '';
+    // const handleDirections = (e) => {
+    //     if (!business) return;
 
-//     if (business.location?.lat && business.location?.lng) {
-//         destination = `${business.location.lat},${business.location.lng}`;
-//     } else if (business.address) {
-//         destination = business.address;
-//     } else {
-//         alert('Location not available for this business');
-//         return;
-//     }
 
-//     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
+    //     let destination = '';
 
-//     window.open(url, '_blank');
-// };
+    //     if (business.location?.lat && business.location?.lng) {
+    //         destination = `${business.location.lat},${business.location.lng}`;
+    //     } else if (business.address) {
+    //         destination = business.address;
+    //     } else {
+    //         alert('Location not available for this business');
+    //         return;
+    //     }
+
+    //     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
+
+    //     window.open(url, '_blank');
+    // };
 
 
     const handleClaimSuccess = () => {
@@ -91,6 +113,15 @@ export default function BusinessProfile() {
                 </svg>
                 Back to Search
             </button>
+            {user?.role === "owner" && (
+                <button
+                    onClick={() => navigate("/owner")}
+                    className="btn btn-outline"
+                >
+                    Owner Dashboard
+                </button>
+                )}
+
 
             <div className="profile-card">
                 <div className="profile-header">
@@ -190,6 +221,54 @@ export default function BusinessProfile() {
                         </p>
                     </div>
                 )}
+
+                {/* Items Section */}
+                {business.claimed && (
+                    <div className="profile-section">
+                        <h2 className="section-title">Menu / Items</h2>
+                        {loadingItems ? (
+                            <div className="owner-loading-state">
+                                <div className="spinner-large"></div>
+                            </div>
+                        ) : items.length === 0 ? (
+                            <div className="owner-empty-state">
+                                <p className="owner-empty-text">No items available</p>
+                            </div>
+                        ) : (
+                            <div className="items-display-grid">
+                                {items.map((item) => (
+                                    <div key={item._id} className="item-display-card">
+                                        <div className="item-display-header">
+                                            <h4 className="item-display-name">{item.name}</h4>
+                                            <span className="item-display-price">₹{item.price}</span>
+                                        </div>
+                                        {item.description && (
+                                            <p className="item-display-description">{item.description}</p>
+                                        )}
+                                        <div className="item-display-availability">
+                                            {item.available ? (
+                                                <span className="availability-badge available">
+                                                    <svg className="badge-icon-small" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Available
+                                                </span>
+                                            ) : (
+                                                <span className="availability-badge unavailable">
+                                                    <svg className="badge-icon-small" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Currently Unavailable
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
 
                 <div className="profile-actions">
 

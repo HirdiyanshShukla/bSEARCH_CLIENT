@@ -5,33 +5,33 @@ import OwnerLayout from "../components/OwnerLayout";
 import Input from "../../Auth/components/Input";
 import Button from "../../Auth/components/Button";
 
-export default function ItemManager() {
+export default function OfferManager() {
     const { placeId } = useParams();
     const navigate = useNavigate();
-    const [items, setItems] = useState([]);
+    const [offers, setOffers] = useState([]);
     const [formData, setFormData] = useState({
-        name: "",
+        title: "",
         description: "",
-        price: ""
+        validTill: ""
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [fetchingItems, setFetchingItems] = useState(true);
+    const [fetchingOffers, setFetchingOffers] = useState(true);
 
     useEffect(() => {
-        loadItems();
+        loadOffers();
     }, [placeId]);
 
-    const loadItems = async () => {
+    const loadOffers = async () => {
         try {
-            setFetchingItems(true);
-            const response = await ownerService.getItems(placeId);
-            setItems(response.data.data || []);
+            setFetchingOffers(true);
+            const response = await ownerService.getOffers(placeId);
+            setOffers(response.data.data || []);
         } catch (err) {
-            console.error("Failed to load items:", err);
-            setItems([]);
+            console.error("Failed to load offers:", err);
+            setOffers([]);
         } finally {
-            setFetchingItems(false);
+            setFetchingOffers(false);
         }
     };
 
@@ -46,38 +46,37 @@ export default function ItemManager() {
         setError("");
 
         try {
-            await ownerService.createItem({
+            await ownerService.createOffer({
                 placeId,
-                ...formData,
-                price: Number(formData.price)
+                ...formData
             });
-            setFormData({ name: "", description: "", price: "" });
-            await loadItems();
+            setFormData({ title: "", description: "", validTill: "" });
+            await loadOffers();
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to add item");
+            setError(err.response?.data?.message || "Failed to create offer");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (itemId) => {
-        if (!confirm("Are you sure you want to delete this item?")) return;
+    const handleDelete = async (offerId) => {
+        if (!confirm("Are you sure you want to delete this offer?")) return;
 
         try {
-            await ownerService.deleteItem(itemId);
-            await loadItems();
+            await ownerService.deleteOffer(offerId);
+            setOffers((prev) => prev.filter((offer) => offer._id !== offerId));
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to delete item");
+            alert(err.response?.data?.message || "Failed to delete offer");
         }
     };
 
-    const handleToggleAvailability = async (itemId, currentAvailability) => {
-        try {
-            await ownerService.toggleItemAvailability(itemId, !currentAvailability);
-            await loadItems();
-        } catch (err) {
-            alert(err.response?.data?.message || "Failed to update availability");
-        }
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     };
 
     return (
@@ -85,7 +84,7 @@ export default function ItemManager() {
             <div className="owner-form-container">
                 <div className="owner-form-card">
                     <div className="owner-form-header">
-                        <h2 className="owner-form-title">Manage Items</h2>
+                        <h2 className="owner-form-title">Manage Offers</h2>
                         <button
                             onClick={() => navigate("/owner")}
                             className="btn btn-back"
@@ -99,84 +98,80 @@ export default function ItemManager() {
 
                     {error && <div className="message message-error">{error}</div>}
 
-                    {/* Add Item Form */}
+                    {/* Create Offer Form */}
                     <form onSubmit={handleSubmit} className="owner-form">
-                        <h3 className="owner-form-subtitle">Add New Item</h3>
+                        <h3 className="owner-form-subtitle">Create New Offer</h3>
 
                         <Input
-                            label="Item Name"
+                            label="Offer Title"
                             type="text"
-                            name="name"
-                            value={formData.name}
+                            name="title"
+                            value={formData.title}
                             onChange={handleChange}
-                            placeholder="Enter item name"
+                            placeholder="e.g., Flat 20% Off"
                             required
                         />
 
                         <div className="input-group">
-                            <label className="input-label">Description</label>
+                            <label className="input-label">
+                                Description <span className="text-rose-400">*</span>
+                            </label>
                             <textarea
                                 name="description"
                                 className="textarea-field"
                                 value={formData.description}
                                 onChange={handleChange}
-                                placeholder="Enter item description (optional)"
+                                placeholder="e.g., On all main course items"
+                                required
                                 rows="3"
                             />
                         </div>
 
                         <Input
-                            label="Price"
-                            type="number"
-                            name="price"
-                            value={formData.price}
+                            label="Valid Till"
+                            type="date"
+                            name="validTill"
+                            value={formData.validTill}
                             onChange={handleChange}
-                            placeholder="Enter price"
                             required
-                            min="0"
-                            step="0.01"
+                            min={new Date().toISOString().split('T')[0]}
                         />
 
                         <Button type="submit" loading={loading}>
-                            Add Item
+                            Create Offer
                         </Button>
                     </form>
 
-                    {/* Items List */}
+                    {/* Offers List */}
                     <div className="owner-items-list">
-                        <h3 className="owner-form-subtitle">Your Items</h3>
+                        <h3 className="owner-form-subtitle">Active Offers</h3>
 
-                        {fetchingItems ? (
+                        {fetchingOffers ? (
                             <div className="owner-loading-state">
                                 <div className="spinner-large"></div>
                             </div>
-                        ) : items.length === 0 ? (
+                        ) : offers.length === 0 ? (
                             <div className="owner-empty-state">
-                                <p className="owner-empty-text">No items added yet</p>
+                                <p className="owner-empty-text">No offers created yet</p>
                             </div>
                         ) : (
                             <div className="owner-items-grid">
-                                {items.map((item) => (
-                                    <div key={item._id} className="owner-item-card">
-                                        <div className="owner-item-header">
-                                            <div>
-                                                <h4 className="owner-item-name">{item.name}</h4>
-                                                {item.description && (
-                                                    <p className="owner-item-description">{item.description}</p>
-                                                )}
-                                            </div>
-                                            <span className="owner-item-price">₹{item.price}</span>
+                                {offers.map((offer) => (
+                                    <div key={offer._id} className="owner-item-card">
+                                        <div className="owner-offer-content">
+                                            <h4 className="owner-item-name">{offer.title}</h4>
+                                            <p className="owner-item-description">{offer.description}</p>
+                                            <p className="owner-offer-validity">
+                                                <svg className="info-icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                Valid till: {formatDate(offer.validTill)}
+                                            </p>
                                         </div>
 
                                         <div className="owner-item-actions">
                                             <button
-                                                onClick={() => handleToggleAvailability(item._id, item.available)}
-                                                className={`btn ${item.available ? 'btn-success' : 'btn-warning'}`}
-                                            >
-                                                {item.available ? 'Available' : 'Unavailable'}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(item._id)}
+                                                onClick={() => handleDelete(offer._id)}
                                                 className="btn btn-danger"
                                             >
                                                 <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">

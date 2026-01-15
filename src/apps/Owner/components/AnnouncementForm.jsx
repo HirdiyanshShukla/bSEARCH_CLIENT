@@ -1,13 +1,21 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ownerService from "../services/ownerService";
+import OwnerLayout from "../components/OwnerLayout";
+import Input from "../../Auth/components/Input";
+import Button from "../../Auth/components/Button";
 
 export default function AnnouncementForm() {
     const { placeId } = useParams();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({ title: "", message: "" });
+    const [formData, setFormData] = useState({ message: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,7 +23,10 @@ export default function AnnouncementForm() {
         setError("");
 
         try {
-            await ownerService.createAnnouncement(placeId, formData);
+            await ownerService.createAnnouncement({
+                placeId,
+                message: formData.message
+            });
             navigate("/owner");
         } catch (err) {
             setError(err.response?.data?.message || "Failed to create announcement");
@@ -25,60 +36,48 @@ export default function AnnouncementForm() {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-900 text-white p-6 flex justify-center items-center">
-            <div className="w-full max-w-md bg-zinc-800 p-8 rounded-xl border border-zinc-700">
-                <h2 className="text-2xl font-bold mb-6">Make Announcement</h2>
+        <OwnerLayout showNav={false}>
+            <div className="owner-form-container">
+                <div className="owner-form-card">
+                    <h2 className="owner-form-title">Make Announcement</h2>
 
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded mb-4">
-                        {error}
-                    </div>
-                )}
+                    {error && (
+                        <div className="message message-error">
+                            {error}
+                        </div>
+                    )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-1">
-                            Title
-                        </label>
-                        <input
-                            type="text"
-                            className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-white focus:outline-none focus:border-blue-500"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            required
-                        />
-                    </div>
+                    <form onSubmit={handleSubmit} className="owner-form">
+                        <div className="input-group">
+                            <label className="input-label">
+                                Message <span className="text-rose-400">*</span>
+                            </label>
+                            <textarea
+                                name="message"
+                                className="textarea-field"
+                                value={formData.message}
+                                onChange={handleChange}
+                                placeholder="Enter your announcement message"
+                                required
+                                rows="5"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-1">
-                            Message
-                        </label>
-                        <textarea
-                            className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 h-32"
-                            value={formData.message}
-                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={() => navigate("/owner")}
-                            className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white py-2 rounded transition"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition disabled:opacity-50"
-                        >
-                            {loading ? "Creating..." : "Create"}
-                        </button>
-                    </div>
-                </form>
+                        <div className="owner-form-actions">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/owner")}
+                                className="btn btn-cancel"
+                            >
+                                Cancel
+                            </button>
+                            <Button type="submit" loading={loading}>
+                                Create Announcement
+                            </Button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </OwnerLayout>
     );
 }
