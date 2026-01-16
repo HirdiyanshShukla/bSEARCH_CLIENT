@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Auth/context/AuthContext';
 import ClaimModal from '../components/ClaimModal';
+import PollDisplay from '../components/PollDisplay';
+import AnnouncementDisplay from '../components/AnnouncementDisplay';
+import OfferDisplay from '../components/OfferDisplay';
 import businessService from '../services/businessService';
 import ownerService from '../../Owner/services/ownerService';
 
@@ -13,8 +16,14 @@ export default function BusinessProfile() {
 
     const [business, setBusiness] = useState(null);
     const [items, setItems] = useState([]);
+    const [polls, setPolls] = useState([]);
+    const [announcements, setAnnouncements] = useState([]);
+    const [offers, setOffers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingItems, setLoadingItems] = useState(false);
+    const [loadingPolls, setLoadingPolls] = useState(false);
+    const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+    const [loadingOffers, setLoadingOffers] = useState(false);
     const [error, setError] = useState('');
     const [showClaimModal, setShowClaimModal] = useState(false);
 
@@ -30,9 +39,12 @@ export default function BusinessProfile() {
             const response = await businessService.getBusinessProfile(placeId);
             setBusiness(response.data);
 
-            // Load items if business is claimed
+            // Load content if business is claimed
             if (response.data?.claimed) {
                 loadItems();
+                loadPolls();
+                loadAnnouncements();
+                loadOffers();
             }
         } catch (err) {
             setError(err.message || 'Failed to load business profile');
@@ -51,6 +63,45 @@ export default function BusinessProfile() {
             setItems([]);
         } finally {
             setLoadingItems(false);
+        }
+    };
+
+    const loadPolls = async () => {
+        try {
+            setLoadingPolls(true);
+            const response = await ownerService.getPolls(placeId);
+            setPolls(response.data.polls || []);
+        } catch (err) {
+            console.error('Failed to load polls:', err);
+            setPolls([]);
+        } finally {
+            setLoadingPolls(false);
+        }
+    };
+
+    const loadAnnouncements = async () => {
+        try {
+            setLoadingAnnouncements(true);
+            const response = await ownerService.getAnnouncements(placeId);
+            setAnnouncements(response.data.data || []);
+        } catch (err) {
+            console.error('Failed to load announcements:', err);
+            setAnnouncements([]);
+        } finally {
+            setLoadingAnnouncements(false);
+        }
+    };
+
+    const loadOffers = async () => {
+        try {
+            setLoadingOffers(true);
+            const response = await ownerService.getOffers(placeId);
+            setOffers(response.data.data || []);
+        } catch (err) {
+            console.error('Failed to load offers:', err);
+            setOffers([]);
+        } finally {
+            setLoadingOffers(false);
         }
     };
 
@@ -120,7 +171,7 @@ export default function BusinessProfile() {
                 >
                     Owner Dashboard
                 </button>
-                )}
+            )}
 
 
             <div className="profile-card">
@@ -263,6 +314,82 @@ export default function BusinessProfile() {
                                             )}
                                         </div>
                                     </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Polls Section */}
+                {business.claimed && (
+                    <div className="profile-section">
+                        <h2 className="section-title">Polls</h2>
+                        {loadingPolls ? (
+                            <div className="owner-loading-state">
+                                <div className="spinner-large"></div>
+                            </div>
+                        ) : polls.length === 0 ? (
+                            <div className="owner-empty-state">
+                                <p className="owner-empty-text">No active polls</p>
+                            </div>
+                        ) : (
+                            <div className="polls-container">
+                                {polls.map((poll) => (
+                                    <PollDisplay
+                                        key={poll._id}
+                                        poll={poll}
+                                        onVoteSuccess={loadPolls}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Announcements Section */}
+                {business.claimed && (
+                    <div className="profile-section">
+                        <h2 className="section-title">Announcements</h2>
+                        {loadingAnnouncements ? (
+                            <div className="owner-loading-state">
+                                <div className="spinner-large"></div>
+                            </div>
+                        ) : announcements.length === 0 ? (
+                            <div className="owner-empty-state">
+                                <p className="owner-empty-text">No announcements</p>
+                            </div>
+                        ) : (
+                            <div className="announcements-container">
+                                {announcements.map((announcement) => (
+                                    <AnnouncementDisplay
+                                        key={announcement._id}
+                                        announcement={announcement}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Offers Section */}
+                {business.claimed && (
+                    <div className="profile-section">
+                        <h2 className="section-title">Special Offers</h2>
+                        {loadingOffers ? (
+                            <div className="owner-loading-state">
+                                <div className="spinner-large"></div>
+                            </div>
+                        ) : offers.length === 0 ? (
+                            <div className="owner-empty-state">
+                                <p className="owner-empty-text">No active offers</p>
+                            </div>
+                        ) : (
+                            <div className="offers-container">
+                                {offers.map((offer) => (
+                                    <OfferDisplay
+                                        key={offer._id}
+                                        offer={offer}
+                                    />
                                 ))}
                             </div>
                         )}
