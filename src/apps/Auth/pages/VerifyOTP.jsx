@@ -44,7 +44,7 @@ export default function VerifyOTP() {
             // Navigate to update password with reset token
             setTimeout(() => {
                 navigate('/update-password', {
-                    state: { resetToken: response.resetToken }
+                    state: { resetToken: response.data.resetToken }
                 });
             }, 1500);
         } catch (error) {
