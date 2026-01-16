@@ -16,6 +16,8 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [lastSearch, setLastSearch] = useState(null);
+
 
   const resultsRef = useRef(null);
 
@@ -36,6 +38,10 @@ export default function HomePage() {
   }, []);
 
   const handleSearch = async (location, type) => {
+
+    setLastSearch({ location, type });
+
+
     setError('');
     setLoading(true);
     setSearched(true);
@@ -45,6 +51,8 @@ export default function HomePage() {
       const results = response.data?.data || [];
 
       setBusinesses(results);
+
+      console.log('Search results:', results);
 
       sessionStorage.setItem('searchResults', JSON.stringify(results));
       sessionStorage.setItem('searched', 'true');
@@ -65,10 +73,13 @@ export default function HomePage() {
   const handleClaimClick = (business) => {
     setSelectedBusiness(business);
   };
+const handleClaimSuccess = async () => {
+  setSelectedBusiness(null);
 
-  const handleClaimSuccess = () => {
-    setSelectedBusiness(null);
-  };
+  if (lastSearch) {
+    await handleSearch(lastSearch.location, lastSearch.type);
+  }
+};
 
   return (
     <div className="home-container">

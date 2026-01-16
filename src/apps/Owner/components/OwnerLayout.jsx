@@ -37,7 +37,7 @@ export default function OwnerLayout({ children, title, showNav = true }) {
                             Logout
                         </button>
                         <button className='btn btn-outline' onClick={()=>navigate("/")}>
-                            go to user homepage
+                            Search Businesses
                         </button>
                     </div>
                 </nav>
